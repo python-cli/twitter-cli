@@ -54,6 +54,7 @@ class Video(Model):
     bitrate = IntegerField(null=True)
     duration_millis = IntegerField(null=True)
     aspect_ratio = CharField(null=True)
+    downloaded_path = CharField(null=True)
 
     class Meta:
         database = _db
@@ -102,6 +103,7 @@ class Photo(Model):
     media_url_https = CharField(null=True)
     size = CharField(null=True)
     url = CharField(null=True)
+    downloaded_path = CharField(null=True)
 
     class Meta:
         database = _db
@@ -157,6 +159,8 @@ class Status(Model):
         s.user = User.initialize(status.user)
 
         if status.media:
+            s.photos.clear()
+
             for media in status.media:
                 if media.type == 'video':
                     s.video = Video.initialize(media)

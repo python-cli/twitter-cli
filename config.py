@@ -1,4 +1,4 @@
-from os import mkdir, pathsep
+from os import mkdir
 from os.path import join, exists, expanduser
 import configparser
 import json
@@ -36,7 +36,7 @@ def _load_config():
 
             config.add_section(_SECTION_STORAGE)
             config.set(_SECTION_STORAGE, 'videos', '')
-            config.set(_SECTION_STORAGE, 'pictures', '')
+            config.set(_SECTION_STORAGE, 'photos', '')
 
             with open(_config_file, 'wb') as f:
                 config.write(f)
@@ -51,12 +51,12 @@ def get_keys():
 
 def get_video_storage_path():
     path = _load_config().get(_SECTION_STORAGE, 'videos')
-    path = path if path else '~' + pathsep + 'Downloads'
+    path = path or join('~', 'Downloads')
 
     return expanduser(path)
 
-def get_picture_storage_path():
-    path = _load_config().get(_SECTION_STORAGE, 'pictures')
-    path = path if path else '~' + pathsep + 'Downloads'
+def get_photo_storage_path():
+    path = _load_config().get(_SECTION_STORAGE, 'photos')
+    path = path or join('~', 'Downloads')
 
     return expanduser(path)
