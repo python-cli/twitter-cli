@@ -1,7 +1,11 @@
+
+from logger import getLogger
 import requests
 from urlparse import urlparse
 from os.path import join, split, exists
 from config import *
+
+logger = getLogger(__name__)
 
 def _download(url, output_dir, extension):
     try:
@@ -12,11 +16,11 @@ def _download(url, output_dir, extension):
             filepath = '%s.%s' % (filepath, extension)
 
         if exists(filepath):
-            print('Found existing file here, reusing it...')
+            logger.info('Found existing file here, reusing it...')
             return filepath
 
         response = requests.get(url, proxies=get_proxy())
-        print('Downloaded to %s' % filepath)
+        logger.info('Downloaded to %s' % filepath)
 
         with open(filepath, 'wb') as f:
             f.write(response.content)

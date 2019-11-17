@@ -1,9 +1,14 @@
 from peewee import *
+from json import dumps
 from config import DATABASE_FILE
 from twitter.models import *
-from json import dumps
+from logger import getLogger
+
+import logging
 
 _db = SqliteDatabase(DATABASE_FILE)
+logger = getLogger(__name__)
+
 
 def pretty_json_string(dic):
     return dumps(dic, sort_keys=True, indent=4)
@@ -167,7 +172,7 @@ class Status(Model):
                 elif media.type == 'photo':
                     s.photos.add(Photo.initialize(media))
                 else:
-                    print('Unexpected media type: %s!' % media.type)
+                    logger.warning('Unexpected media type: %s!' % media.type)
 
         s.save()
         return s
