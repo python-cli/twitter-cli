@@ -7,8 +7,8 @@ _root = expanduser('~/.twitter-cli')
 exists(_root) or mkdir(_root)
 
 _config = None
-_config_file = join(_root, 'config')
 
+CONFIG_FILE = join(_root, 'config')
 DATABASE_FILE = join(_root, 'data.sqlite3')
 
 _SECTION_PROXY = 'PROXY'
@@ -21,8 +21,8 @@ def _load_config():
     if _config is None:
         config = configparser.ConfigParser()
 
-        if exists(_config_file):
-            config.read(_config_file)
+        if exists(CONFIG_FILE):
+            config.read(CONFIG_FILE)
         else:
             config.add_section(_SECTION_PROXY)
             config.set(_SECTION_PROXY, 'http', '')
