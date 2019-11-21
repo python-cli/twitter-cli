@@ -55,10 +55,16 @@ def destroy_favorited_status(status):
     return False
 
 def save_status(status, destroy=False):
-    s = Status.initialize(status)
+    if isinstance(status, TwitterModel):
+        s = Status.initialize(status)
+    elif isinstance(status, PeeweeModel):
+        s = status
+    else:
+        assert('Unexpected status type! %s' % status)
 
     logger.debug('Status: %s\n%s:[\n%s\n]' % (s.id, s.user.name, s.text))
 
+    should_destory = False
     video = s.video
 
     if video:
@@ -70,8 +76,7 @@ def save_status(status, destroy=False):
             video.downloaded_path = filepath
             video.save()
 
-            if destroy and destroy_favorited_status(status):
-                return
+            should_destory = True
         else:
             logger.error('Download video failed?')
 
@@ -84,13 +89,24 @@ def save_status(status, destroy=False):
                 p.downloaded_path = filepath
                 p.save()
 
-                if destroy and destroy_favorited_status(status):
-                    return
+                should_destory = True
             else:
                 logger.error('Download photo failed?')
 
+    if s.quoted_status:
+        logger.debug('Found quoted status: %s\n%s:[\n%s\n]' % (s.quoted_status.id, s.quoted_status.user.name, s.quoted_status.text))
+        save_status(s.quoted_status)
+
+        should_destory = True
+
     if s.retweeted_status:
-        save_status(s.retweeted_status, destroy)
+        logger.debug('Found retweeted status: %s\n%s:[\n%s\n]' % (s.retweeted_status.id, s.retweeted_status.user.name, s.retweeted_status.text))
+        save_status(s.retweeted_status)
+
+        should_destory = True
+
+    if should_destory and destroy and destroy_favorited_status(status):
+        return
 
 def fetch_iteriable_statuses(pfunc):
     max_id = None
@@ -111,7 +127,7 @@ def fetch_iteriable_statuses(pfunc):
 
                 # Let's try it in next hour later.
                 logger.info('Start sleeping')
-                sleep(24 * 60 * 60)
+                sleep(2 * 60 * 60)
                 logger.info('End sleeping')
 
                 continue
@@ -176,8 +192,11 @@ def timeline(ctx, username, download_media):
         generator = fetch_iteriable_statuses(lambda max_id: api.GetUserTimeline(screen_name=username, count=PAGE_SIZE, max_id=max_id))
 
     for status in generator:
-        # print_sample_entity(status)
-        print('%d: %s'.format(status.id, status.user.name))
+        if download_media:
+            save_status(status)
+        else:
+            # print_sample_entity(status)
+            print('%d: %s' % (status.id, status.user.name))
 
     logger.info('Done!')
 

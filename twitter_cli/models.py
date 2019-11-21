@@ -13,8 +13,24 @@ logger = getLogger(__name__)
 def pretty_json_string(dic):
     return dumps(dic, sort_keys=True, indent=4)
 
+def get(self, attr, default=None):
+    if hasattr(self, attr):
+        return getattr(self, attr)
+    else:
+        return default
 
-class User(Model):
+# Inject this safe getter method to TwitterModel class.
+setattr(TwitterModel, 'get', get)
+
+class PeeweeModel(Model):
+    class Meta:
+        database = _db
+
+    @classmethod
+    def initialize(cls, model):
+        assert(isinstance(model, TwitterModel))
+
+class User(PeeweeModel):
     id = BigIntegerField(primary_key=True)
     name = CharField(null=True)
     created_at = CharField(null=True)
@@ -25,28 +41,27 @@ class User(Model):
     profile_image_url = CharField(null=True)
     description = CharField(null=True)
 
-    class Meta:
-        database = _db
-
     def __str__(self):
         return 'id: %s, username: %s' % (self.id, self.name)
 
     @classmethod
     def initialize(cls, user):
+        super(User, cls).initialize(user)
+
         u, _ = cls.get_or_create(id=user.id)
-        u.name = user.name
-        u.created_at = user.created_at
-        u.followers = user.followers_count
-        u.statuses_count = user.statuses_count
-        u.location = user.location
-        u.screen_name = user.screen_name
-        u.profile_image_url = user.profile_image_url
-        u.description = user.description
+        u.name = user.get('name')
+        u.created_at = user.get('created_at')
+        u.followers = user.get('followers_count', 0)
+        u.statuses_count = user.get('statuses_count', 0)
+        u.location = user.get('location')
+        u.screen_name = user.get('screen_name')
+        u.profile_image_url = user.get('profile_image_url')
+        u.description = user.get('description')
 
         u.save()
         return u
 
-class Video(Model):
+class Video(PeeweeModel):
     id = BigIntegerField(primary_key=True)
     display_url = CharField(null=True)
     expanded_url = CharField(null=True)
@@ -61,25 +76,24 @@ class Video(Model):
     aspect_ratio = CharField(null=True)
     downloaded_path = CharField(null=True)
 
-    class Meta:
-        database = _db
-
     def __str__(self):
         return 'id: %s, url: %s' % (self.id, self.media_url_https)
 
     @classmethod
     def initialize(cls, video):
-        v, _ = cls.get_or_create(id=video.id)
-        v.display_url = video.display_url
-        v.expanded_url = video.expanded_url
-        v.media_url = video.media_url
-        v.media_url_https = video.media_url_https
-        v.size = pretty_json_string(video.sizes)
-        v.url = video.url
+        super(Video, cls).initialize(video)
 
-        info_dict = video.video_info
-        v.duration_millis = info_dict['duration_millis']
-        v.aspect_ratio = str(info_dict['aspect_ratio'])
+        v, _ = cls.get_or_create(id=video.id)
+        v.display_url = video.get('display_url')
+        v.expanded_url = video.get('expanded_url')
+        v.media_url = video.get('media_url')
+        v.media_url_https = video.get('media_url_https')
+        v.size = pretty_json_string(video.get('sizes'))
+        v.url = video.get('url')
+
+        info_dict = video.get('video_info')
+        v.duration_millis = info_dict.get('duration_millis')
+        v.aspect_ratio = str(info_dict.get('aspect_ratio'))
 
         prefer_variant = None
 
@@ -100,7 +114,7 @@ class Video(Model):
         v.save()
         return v
 
-class Photo(Model):
+class Photo(PeeweeModel):
     id = BigIntegerField(primary_key=True)
     display_url = CharField(null=True)
     expanded_url = CharField(null=True)
@@ -110,26 +124,25 @@ class Photo(Model):
     url = CharField(null=True)
     downloaded_path = CharField(null=True)
 
-    class Meta:
-        database = _db
-
     def __str__(self):
         return 'id: %s, url: %s' % (self.id, self.media_url_https)
 
     @classmethod
     def initialize(cls, photo):
+        super(Photo, cls).initialize(photo)
+
         p, _ = cls.get_or_create(id=photo.id)
-        p.display_url = photo.display_url
-        p.expanded_url = photo.expanded_url
-        p.media_url = photo.media_url
-        p.media_url_https = photo.media_url_https
-        p.size = pretty_json_string(photo.sizes)
-        p.url = photo.url
+        p.display_url = photo.get('display_url')
+        p.expanded_url = photo.get('expanded_url')
+        p.media_url = photo.get('media_url')
+        p.media_url_https = photo.get('media_url_https')
+        p.size = pretty_json_string(photo.get('sizes'))
+        p.url = photo.get('url')
 
         p.save()
         return p
 
-class Status(Model):
+class Status(PeeweeModel):
     id = BigIntegerField(primary_key=True)
     text = CharField(null=True)
     lang = CharField(null=True)
@@ -144,35 +157,44 @@ class Status(Model):
     video = ForeignKeyField(Video, backref='statuses', null=True)
     photos = ManyToManyField(Photo, backref='statuses')
 
-    class Meta:
-        database = _db
+    # http://docs.peewee-orm.com/en/latest/peewee/models.html#self-referential-foreign-keys
+    quoted_status = ForeignKeyField('self', backref='quotes', null=True)
+    retweeted_status = ForeignKeyField('self', backref='retweets', null=True)
 
     def __str__(self):
         return 'id: %s, user: %s, text: %s' % (self.id, self.user.name, self.text)
 
     @classmethod
     def initialize(cls, status):
-        s, _ = cls.get_or_create(id=status.id)
-        s.text = status.text
-        s.lang = status.lang
-        s.possibly_sensitive = status.possibly_sensitive
-        s.favorited = status.favorited
-        s.retweet_count = status.retweet_count
-        s.favorite_count = status.favorite_count
-        s.source = status.source
-        s.created_at = status.created_at
-        s.user = User.initialize(status.user)
+        super(Status, cls).initialize(status)
 
-        if status.media:
+        s, _ = cls.get_or_create(id=status.id)
+        s.text = status.get('text')
+        s.lang = status.get('lang')
+        s.possibly_sensitive = status.get('possibly_sensitive')
+        s.favorited = status.get('favorited')
+        s.retweet_count = status.get('retweet_count', 0)
+        s.favorite_count = status.get('favorite_count', 0)
+        s.source = status.get('source')
+        s.created_at = status.get('created_at')
+        s.user = User.initialize(status.get('user'))
+
+        if status.get('media'):
             s.photos.clear()
 
             for media in status.media:
-                if media.type == 'video':
+                if media.type == 'video' or media.type == 'animated_gif':
                     s.video = Video.initialize(media)
                 elif media.type == 'photo':
                     s.photos.add(Photo.initialize(media))
                 else:
-                    logger.warning('Unexpected media type: %s!' % media.type)
+                    logger.warning('Unexpected media type: %s! Details: %s' % (media.type, media.AsDict()))
+
+        if status.get('quoted_status'):
+            s.quoted_status = cls.initialize(status.quoted_status)
+
+        if status.get('retweeted_status'):
+            s.retweeted_status = cls.initialize(status.retweeted_status)
 
         s.save()
         return s
