@@ -19,12 +19,14 @@ def _download(url, output_dir, extension):
             logger.info('Found existing file here, reusing it...')
             return filepath
 
+        logger.info('Downloading %s' % url)
         response = requests.get(url, proxies=get_proxy())
         logger.info('Downloaded to %s' % filepath)
 
         with open(filepath, 'wb') as f:
             f.write(response.content)
-    except:
+    except requests.RequestException as e:
+        logger.exception(e)
         filepath = None
 
     return filepath
