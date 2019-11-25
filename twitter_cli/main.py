@@ -13,7 +13,6 @@ from downloader import *
 api = twitter.Api(proxies=get_proxy(), **get_keys())
 logger = getLogger(__name__)
 
-DEBUG = False
 PAGE_SIZE = 100
 
 def print_sample_entity(entities, prefix=''):
@@ -150,13 +149,11 @@ def fetch_iteriable_statuses(pfunc):
             break
 
 @click.group()
-@click.option('--debug/--no-debug', default=False)
+@click.option('--debug/--no-debug', default=False, help='Enable logger level to DEBUG')
 @click.pass_context
 def cli(ctx, debug):
-    global DEBUG
-    DEBUG = debug
+    logger.setLevel(logging.DEBUG if debug else logging.INFO)
     debug and click.echo('Debug mode is on')
-    pass
 
 @cli.command()
 @click.pass_context
@@ -179,7 +176,7 @@ def credential(ctx):
 
 @cli.command()
 @click.argument('username', type=click.STRING, default='me')
-@click.option('--download-media/--no-download-media', default=True)
+@click.option('--download-media/--no-download-media', default=True, help='Download status\'s media files or not')
 @click.pass_context
 def timeline(ctx, username, download_media):
     '''
@@ -201,25 +198,43 @@ def timeline(ctx, username, download_media):
     logger.info('Done!')
 
 @cli.command()
-@click.option('--from-latest/--from-last', default=False)
-@click.option('--download-media/--no-download-media', default=True)
-@click.option('--destroy/--no-destroy', default=False)
+@click.option('--from-latest/--from-last', default=False, help='Fetch statuses from latest or last saved one')
+@click.option('--download-media/--no-download-media', default=True, help='Download status\'s media files or not')
+@click.option('--destroy/--no-destroy', default=False, help='Destroy the favorite statuses')
+@click.option('--schedule', type=click.INT, default=0, help='Run as scheduler with specified hours')
 @click.pass_context
-def favorites(ctx, from_latest, download_media, destroy):
+def favorites(ctx, from_latest, download_media, destroy, schedule):
     '''
     Fetch the user's favorite statuses.
     '''
 
-    if from_latest:
-        max_id = None
-    else:
-        status = Status.select().order_by(Status.id).first()
-        max_id = status.id if status else None
-
-    for status in fetch_iteriable_statuses(lambda max_id: api.GetFavorites(count=PAGE_SIZE, max_id=max_id)):
-        if download_media:
-            save_status(status, destroy=destroy)
+    def job():
+        if from_latest:
+            max_id = None
         else:
-            print_sample_entity(status)
+            status = Status.select().order_by(Status.id).first()
+            max_id = status.id if status else None
+
+        for status in fetch_iteriable_statuses(lambda max_id: api.GetFavorites(count=PAGE_SIZE, max_id=max_id)):
+            if download_media:
+                save_status(status, destroy=destroy)
+            else:
+                print_sample_entity(status)
+
+    if schedule <= 0:
+        job()
+    else:
+        while True:
+            try:
+                job()
+            except (KeyboardInterrupt, SystemExit):
+                logger.warning('Interrupt by keyboard, stopping')
+                break
+            except Exception as e:
+                logger.exception(e)
+
+            logger.info('Start sleeping, waiting for next schedule...')
+            sleep(schedule * 60 * 60)
+            logger.info('End sleeping')
 
     logger.info('Done!')
