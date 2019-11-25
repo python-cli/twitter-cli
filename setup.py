@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='twitter-cli',
-    version='0.2',
+    version='0.1',
     author='Will Han',
     author_email='xingheng.hax@qq.com',
     license='MIT',
