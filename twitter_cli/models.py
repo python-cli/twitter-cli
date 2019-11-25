@@ -1,6 +1,5 @@
 from peewee import *
-from json import dumps
-from config import DATABASE_FILE
+from config import pretty_json_string, DATABASE_FILE
 from twitter.models import *
 from logger import getLogger
 
@@ -9,9 +8,6 @@ import logging
 _db = SqliteDatabase(DATABASE_FILE)
 logger = getLogger(__name__)
 
-
-def pretty_json_string(dic):
-    return dumps(dic, sort_keys=True, indent=4)
 
 def get(self, attr, default=None):
     if hasattr(self, attr):

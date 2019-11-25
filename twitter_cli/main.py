@@ -157,6 +157,14 @@ def cli(ctx, debug):
 
 @cli.command()
 @click.pass_context
+def configure(ctx):
+    '''
+    Show the current configurations.
+    '''
+    logger.info('\n%s' % get_raw_config())
+
+@cli.command()
+@click.pass_context
 def credential(ctx):
     '''
     Verify the current user credential.
