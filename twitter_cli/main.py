@@ -14,6 +14,7 @@ api = twitter.Api(proxies=get_proxy(), **get_keys())
 logger = getLogger(__name__)
 
 PAGE_SIZE = 100
+MYSELF = 'me'
 
 def print_sample_entity(entities, prefix=''):
     if not entities:
@@ -104,8 +105,11 @@ def save_status(status, destroy=False):
 
         should_destory = True
 
-    if should_destory and destroy and destroy_favorited_status(status):
-        return
+    if destroy:
+        if not should_destory:
+            logger.warning('Destroying this status even no media found! Detail:\n%s', print_sample_entity(status))
+
+        destroy_favorited_status(status)
 
 def fetch_iteriable_statuses(pfunc):
     max_id = None
@@ -119,17 +123,21 @@ def fetch_iteriable_statuses(pfunc):
         except twitter.TwitterError as e:
             logger.exception(e)
             statuses = None
+            code = e.args[0][0]['code']
 
-            if e.args[0][0]['code'] == 88:
+            if code == 88:
                 # TwitterError: Rate limit exceeded.
                 # https://developer.twitter.com/en/docs/basics/rate-limiting
 
                 # Let's try it in next hour later.
-                logger.info('Start sleeping')
+                logger.info('Start sleeping because rate limit exceeded')
                 sleep(2 * 60 * 60)
                 logger.info('End sleeping')
 
                 continue
+            elif code == 34:
+                # "Sorry, that page does not exist."
+                break
         except Exception as e:
             logger.exception(e)
             statuses = None
@@ -183,25 +191,59 @@ def credential(ctx):
         logger.error('Verification Failed')
 
 @cli.command()
-@click.argument('username', type=click.STRING, default='me')
+@click.argument('usernames', nargs=-1, type=click.STRING)
 @click.option('--download-media/--no-download-media', default=True, help='Download status\'s media files or not')
+@click.option('--schedule', type=click.INT, default=0, help='Run as scheduler with specified hours')
 @click.pass_context
-def timeline(ctx, username, download_media):
+def timeline(ctx, usernames, download_media, schedule):
     '''
     Fetch the specified user's timeline.
     '''
 
-    if username == 'me':
-        generator = fetch_iteriable_statuses(lambda max_id: api.GetHomeTimeline(count=PAGE_SIZE, max_id=max_id))
-    elif len(username) > 0:
-        generator = fetch_iteriable_statuses(lambda max_id: api.GetUserTimeline(screen_name=username, count=PAGE_SIZE, max_id=max_id))
+    if len(usernames) <= 0:
+        usernames = [MYSELF]
 
-    for status in generator:
-        if download_media:
-            save_status(status)
-        else:
-            # print_sample_entity(status)
-            print('%d: %s' % (status.id, status.user.name))
+    def job():
+        generators = {}
+
+        for username in usernames:
+            if username == MYSELF:
+                pfunc = lambda max_id: api.GetHomeTimeline(count=PAGE_SIZE, max_id=max_id)
+            elif len(username) > 0:
+                pfunc = lambda max_id: api.GetUserTimeline(screen_name=username, count=PAGE_SIZE, max_id=max_id)
+            else:
+                pfunc = None
+
+            if pfunc:
+                generators[username] = fetch_iteriable_statuses(pfunc)
+
+        for username, generator in generators.items():
+            logger.info('Fetching timeline of user [%s]' % username)
+
+            for status in generator:
+                shall_download = status.favorite_count * 1.0 / status.user.followers_count > 0.4
+                shall_download |= status.favorite_count > 500
+
+                if shall_download or download_media:
+                    save_status(status)
+                else:
+                    print_sample_entity(status)
+
+    if schedule <= 0:
+        job()
+    else:
+        while True:
+            try:
+                job()
+            except (KeyboardInterrupt, SystemExit):
+                logger.warning('Interrupt by keyboard, stopping')
+                break
+            except Exception as e:
+                logger.exception(e)
+
+            logger.info('Start sleeping, waiting for next schedule...')
+            sleep(schedule * 60 * 60)
+            logger.info('End sleeping')
 
     logger.info('Done!')
 
