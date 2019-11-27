@@ -14,6 +14,7 @@ DATABASE_FILE = join(_root, 'data.sqlite3')
 _SECTION_PROXY = 'PROXY'
 _SECTION_KEYS = 'KEYS'
 _SECTION_STORAGE = 'STORAGE'
+_SECTION_USERS = 'USERS'
 
 def _load_config():
     global _config
@@ -38,10 +39,16 @@ def _load_config():
             _config.set(_SECTION_STORAGE, 'videos', '')
             _config.set(_SECTION_STORAGE, 'photos', '')
 
+            _config.add_section(_SECTION_USERS)
+            _config.set(_SECTION_USERS, 'names', '["me", ]')
+
             with open(CONFIG_FILE, 'wb') as f:
                 _config.write(f)
 
     return _config
+
+def pretty_json_string(dic):
+    return json.dumps(dic, sort_keys=True, indent=4)
 
 def get_raw_config():
     output = ''
@@ -74,5 +81,5 @@ def get_photo_storage_path():
 
     return expanduser(path)
 
-def pretty_json_string(dic):
-    return json.dumps(dic, sort_keys=True, indent=4)
+def get_pinned_users():
+    return json.loads(_load_config().get(_SECTION_USERS, 'names'))

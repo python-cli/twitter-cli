@@ -192,14 +192,19 @@ def credential(ctx):
 
 @cli.command()
 @click.argument('usernames', nargs=-1, type=click.STRING)
+@click.option('--pinned/--no-pinned', default=False, help='Append the pinned users to current usernames')
 @click.option('--download-media/--no-download-media', default=True, help='Download status\'s media files or not')
 @click.option('--schedule', type=click.INT, default=0, help='Run as scheduler with specified hours')
 @click.pass_context
-def timeline(ctx, usernames, download_media, schedule):
+def timeline(ctx, usernames, pinned, download_media, schedule):
     '''
-    Fetch the specified user's timeline.
+    Fetch the specified users' timeline.
     '''
+    # Convert the tuple to list
+    usernames = list(usernames)
 
+    if pinned:
+        usernames.extend(get_pinned_users())
     if len(usernames) <= 0:
         usernames = [MYSELF]
 
