@@ -1,10 +1,10 @@
-from os import mkdir
+from os import makedirs
 from os.path import join, exists, expanduser
 import configparser
 import json
 
 _root = expanduser('~/.twitter-cli')
-exists(_root) or mkdir(_root)
+exists(_root) or makedirs(_root)
 
 _config = None
 
@@ -36,8 +36,9 @@ def _load_config():
             _config.set(_SECTION_KEYS, 'access_token_secret', '')
 
             _config.add_section(_SECTION_STORAGE)
-            _config.set(_SECTION_STORAGE, 'videos', '')
-            _config.set(_SECTION_STORAGE, 'photos', '')
+            _config.set(_SECTION_STORAGE, 'root_path', '~/Downloads/twitter-cli')
+            _config.set(_SECTION_STORAGE, 'timeline', 'timeline')
+            _config.set(_SECTION_STORAGE, 'favorite', 'favorite')
 
             _config.add_section(_SECTION_USERS)
             _config.set(_SECTION_USERS, 'names', '["me", ]')
@@ -69,17 +70,26 @@ def get_proxy():
 def get_keys():
     return dict(_load_config().items(_SECTION_KEYS))
 
-def get_video_storage_path():
-    path = _load_config().get(_SECTION_STORAGE, 'videos')
-    path = path or join('~', 'Downloads')
+def _get_storage_path(is_favorite=False, timeline=None):
+    config = _load_config()
+    path = config.get(_SECTION_STORAGE, 'root_path')
+
+    if is_favorite:
+        path = join(path, config.get(_SECTION_STORAGE, 'favorite'))
+    elif timeline:
+        path = join(path, config.get(_SECTION_STORAGE, 'timeline'), timeline)
 
     return expanduser(path)
 
-def get_photo_storage_path():
-    path = _load_config().get(_SECTION_STORAGE, 'photos')
-    path = path or join('~', 'Downloads')
+def get_video_storage_path(is_favorite=False, timeline=None):
+    path = join(_get_storage_path(is_favorite, timeline), 'videos')
+    exists(path) or makedirs(path)
+    return path
 
-    return expanduser(path)
+def get_photo_storage_path(is_favorite=False, timeline=None):
+    path = join(_get_storage_path(is_favorite, timeline), 'photos')
+    exists(path) or makedirs(path)
+    return path
 
 def get_pinned_users():
     return json.loads(_load_config().get(_SECTION_USERS, 'names'))

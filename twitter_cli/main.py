@@ -54,7 +54,7 @@ def destroy_favorited_status(status):
 
     return False
 
-def save_status(status, destroy=False):
+def save_status(status, destroy=False, timeline=None):
     if isinstance(status, TwitterModel):
         s = Status.initialize(status)
     elif isinstance(status, PeeweeModel):
@@ -69,8 +69,9 @@ def save_status(status, destroy=False):
 
     if video:
         logger.debug('Found video: %s' % video)
+        path = get_video_storage_path(is_favorite=s.favorited, timeline=timeline)
         extension = split(video.content_type)[-1]
-        filepath = download_video(video.video_url, extension=extension)
+        filepath = download_video(video.video_url, path, prefix=str(status.id), extension=extension)
 
         if filepath:
             video.downloaded_path = filepath
@@ -83,7 +84,8 @@ def save_status(status, destroy=False):
     if s.is_photo:
         for p in s.photos:
             logger.debug('Found photo: %s' % p)
-            filepath = download_photo(p.media_url_https or p.media_url)
+            path = get_photo_storage_path(is_favorite=s.favorited, timeline=timeline)
+            filepath = download_photo(p.media_url_https or p.media_url, path, prefix=str(status.id))
 
             if filepath:
                 p.downloaded_path = filepath
@@ -177,7 +179,6 @@ def credential(ctx):
     '''
     Verify the current user credential.
     '''
-
     try:
         userinfo = api.VerifyCredentials()
     except twitter.TwitterError as e:
@@ -185,8 +186,8 @@ def credential(ctx):
         logger.error('Make sure you\'ve configured the twitter keys right in file %s.' % CONFIG_FILE)
 
     if userinfo:
+        print_sample_entity(userinfo, 'User info:')
         logger.info('Verification pass!')
-        print_sample_entity(userinfo)
     else:
         logger.error('Verification Failed')
 
@@ -223,14 +224,14 @@ def timeline(ctx, usernames, pinned, download_media, schedule):
                 generators[username] = fetch_iteriable_statuses(pfunc)
 
         for username, generator in generators.items():
-            logger.info('Fetching timeline of user [%s]' % username)
+            logger.info('Fetching timeline of pinned user [%s]' % username)
 
             for status in generator:
                 shall_download = status.favorite_count * 1.0 / status.user.followers_count > 0.4
                 shall_download |= status.favorite_count > 500
 
                 if shall_download or download_media:
-                    save_status(status)
+                    save_status(status, timeline=username)
                 else:
                     print_sample_entity(status)
 

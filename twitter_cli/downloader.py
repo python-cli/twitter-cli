@@ -7,13 +7,17 @@ from config import *
 
 logger = getLogger(__name__)
 
-def _download(url, output_dir, extension):
+def _download(url, output_dir, prefix, extension):
     try:
         paths = split(urlparse(url).path)
-        filepath = join(output_dir, paths[-1])
+        filename = paths[-1]
 
-        if '.' not in filepath:
-            filepath = '%s.%s' % (filepath, extension)
+        if '.' in filename:
+            filename = '%s-%s' % (prefix, filename)
+        else:
+            filename = '%s-%s.%s' % (prefix, filename, extension)
+
+        filepath = join(output_dir, filename)
 
         if exists(filepath):
             logger.info('Found existing file here, reusing it...')
@@ -31,8 +35,8 @@ def _download(url, output_dir, extension):
 
     return filepath
 
-def download_video(url, extension='mp4'):
-    return _download(url, get_video_storage_path(), extension)
+def download_video(url, output_dir, prefix='', extension='mp4'):
+    return _download(url, output_dir, prefix, extension)
 
-def download_photo(url, extension='jpg'):
-    return _download(url, get_photo_storage_path(), extension)
+def download_photo(url, output_dir, prefix='', extension='jpg'):
+    return _download(url, output_dir, prefix, extension)
