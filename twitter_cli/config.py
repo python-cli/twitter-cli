@@ -3,7 +3,7 @@ from os.path import join, exists, expanduser
 import configparser
 import json
 
-_root = expanduser('~/.twitter-cli')
+_root = expanduser('~/.config/twitter-cli')
 exists(_root) or makedirs(_root)
 
 _config = None
