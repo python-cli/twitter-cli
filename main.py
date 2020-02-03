@@ -1,17 +1,82 @@
 #!/usr/bin/env python
 
-from logger import getLogger
+import coloredlogs, logging, logging.config
 import twitter
 import click
 from os.path import split
 from time import sleep
 
-from config import *
-from models import *
-from downloader import *
+from twitter_cli.config import *
+from twitter_cli.models import *
+from twitter_cli.downloader import *
+
+# Refer to
+#   1. https://stackoverflow.com/a/7507842/1677041
+#   2. https://stackoverflow.com/a/49400680/1677041
+#   3. https://docs.python.org/2/library/logging.config.html
+LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        },
+        'colored': {
+            '()': 'coloredlogs.ColoredFormatter',
+            'format': "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            'datefmt': '%H:%M:%S',
+        }
+    },
+    'handlers': {
+        'default': {
+            'level': 'DEBUG' if __debug__ else 'INFO',
+            'formatter': 'standard',
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://sys.stdout',  # Default is stderr
+        },
+        'console': {
+            'level': 'DEBUG' if __debug__ else 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'colored',
+            'stream': 'ext://sys.stdout'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'standard',
+            'filename': 'main.log',
+            'maxBytes': 1024 * 1024,
+            'backupCount': 10
+        },
+    },
+    'loggers': {
+        '': {  # root logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        '__main__': {  # if __name__ == '__main__'
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'twitter': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+        'twitter_cli': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
+    }
+}
+
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger(__name__)
 
 api = twitter.Api(proxies=get_proxy(), **get_keys())
-logger = getLogger(__name__)
 
 PAGE_SIZE = 100
 MYSELF = 'me'
@@ -294,3 +359,7 @@ def favorites(ctx, from_latest, download_media, destroy, schedule):
             logger.info('End sleeping')
 
     logger.info('Done!')
+
+
+if __name__ == '__main__':
+    cli()

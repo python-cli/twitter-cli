@@ -1,11 +1,11 @@
 
-from logger import getLogger
+import logging
 import requests
 from urlparse import urlparse
 from os.path import join, split, exists
 from config import *
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def _download(url, output_dir, prefix, extension):
     try:

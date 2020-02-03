@@ -1,12 +1,12 @@
-from peewee import *
-from config import pretty_json_string, DATABASE_FILE
-from twitter.models import *
-from logger import getLogger
-
 import logging
 
+from peewee import *
+from twitter.models import *
+
+from .config import pretty_json_string, DATABASE_FILE
+
 _db = SqliteDatabase(DATABASE_FILE)
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def get(self, attr, default=None):

@@ -5,15 +5,15 @@ with open("README.md", "r") as fh:
 
 setup(
     name='twitter-cli',
-    version='0.1',
+    version='0.2',
     author='Will Han',
     author_email='xingheng.hax@qq.com',
     license='MIT',
     keywords='twitter cli media downloader',
     url='https://github.com/xingheng/twitter-cli',
     description='twitter crawler',
-    # long_description=long_description,
-    # long_description_content_type='text/markdown',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=['twitter_cli'],
     include_package_data=True,
     install_requires=[
