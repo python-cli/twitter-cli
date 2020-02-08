@@ -10,6 +10,8 @@ from twitter_cli.config import *
 from twitter_cli.models import *
 from twitter_cli.downloader import *
 
+from requests.exceptions import SSLError
+
 # Refer to
 #   1. https://stackoverflow.com/a/7507842/1677041
 #   2. https://stackoverflow.com/a/49400680/1677041
@@ -100,7 +102,7 @@ def print_sample_entity(entities, prefix=''):
 
     logger.info(prefix + content)
 
-def destroy_favorited_status(status):
+def destroy_favorited_status(status, retry=10):
     if not status or not status.id:
         return False
 
@@ -116,6 +118,11 @@ def destroy_favorited_status(status):
             # TwitterError: No status found with that ID
             # Let's just pretend it as suceed.
             return True
+    except SSLError as e:
+        if retry > 0:
+            return destroy_favorited_status(status, retry=retry-1)
+        else:
+            raise e
 
     return False
 
