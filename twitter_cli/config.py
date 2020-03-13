@@ -34,6 +34,7 @@ def _load_config():
             _config.set(_SECTION_KEYS, 'consumer_secret', '')
             _config.set(_SECTION_KEYS, 'access_token_key', '')
             _config.set(_SECTION_KEYS, 'access_token_secret', '')
+            _config.set(_SECTION_KEYS, 'bark_key', '')
 
             _config.add_section(_SECTION_STORAGE)
             _config.set(_SECTION_STORAGE, 'root_path', '~/Downloads/twitter-cli')
@@ -69,6 +70,9 @@ def get_proxy():
 
 def get_keys():
     return dict(_load_config().items(_SECTION_KEYS))
+
+def get_bark_key():
+    return _load_config().get(_SECTION_KEYS, 'bark_key')
 
 def _get_storage_path(is_favorite=False, timeline=None):
     config = _load_config()

@@ -9,6 +9,7 @@ from time import sleep
 from twitter_cli.config import *
 from twitter_cli.models import *
 from twitter_cli.downloader import *
+from twitter_cli.counter import *
 
 from requests.exceptions import SSLError
 
@@ -150,8 +151,10 @@ def save_status(status, destroy=False, timeline=None):
             video.save()
 
             should_destory = True
+            Counter.success()
         else:
             logger.error('Download video failed?')
+            Counter.failure()
 
     if s.is_photo:
         for p in s.photos:
@@ -164,8 +167,10 @@ def save_status(status, destroy=False, timeline=None):
                 p.save()
 
                 should_destory = True
+                Counter.success()
             else:
                 logger.error('Download photo failed?')
+                Counter.failure()
 
     if s.quoted_status:
         logger.debug('Found quoted status: %s\n%s:[\n%s\n]' % (s.quoted_status.id, s.quoted_status.user.name, s.quoted_status.text))
