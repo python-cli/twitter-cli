@@ -22,6 +22,7 @@ setup(
         'peewee>=3.11.2',
         'python-twitter>=3.5',
         'click>=7.0',
+        'futures>=3',
     ],
     entry_points='''
         [console_scripts]

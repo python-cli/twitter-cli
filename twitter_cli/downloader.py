@@ -3,9 +3,11 @@ import logging
 import requests
 from urlparse import urlparse
 from os.path import join, split, exists
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from config import *
 
 logger = logging.getLogger(__name__)
+executor = ThreadPoolExecutor()
 
 def _download(url, output_dir, prefix, extension):
     try:
@@ -23,12 +25,15 @@ def _download(url, output_dir, prefix, extension):
             logger.info('Found existing file here, reusing it...')
             return filepath
 
-        logger.info('Downloading %s' % url)
-        response = requests.get(url, proxies=get_proxy())
-        logger.info('Downloaded to %s' % filepath)
+        def task(url):
+            logger.info('Downloading %s' % url)
+            response = requests.get(url, proxies=get_proxy())
+            logger.info('Downloaded to %s' % filepath)
 
-        with open(filepath, 'wb') as f:
-            f.write(response.content)
+            with open(filepath, 'wb') as f:
+                f.write(response.content)
+
+        executor.submit(task, (url))
     except requests.RequestException as e:
         logger.exception(e)
         filepath = None
