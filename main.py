@@ -370,6 +370,7 @@ def favorites(ctx, from_latest, download_media, destroy, schedule):
             sleep(schedule * 60 * 60)
             logger.info('End sleeping')
 
+    wait_for_download_completed()
     logger.info('Done!')
 
 

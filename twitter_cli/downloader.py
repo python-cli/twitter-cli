@@ -45,3 +45,6 @@ def download_video(url, output_dir, prefix='', extension='mp4'):
 
 def download_photo(url, output_dir, prefix='', extension='jpg'):
     return _download(url, output_dir, prefix, extension)
+
+def wait_for_download_completed():
+    executor.shutdown()
