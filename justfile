@@ -1,9 +1,23 @@
+default:
+    @just --choose
+
+active-env:
+    @source venv/bin/activate
+
+install:
+    @pip install -e .
+
+setup:
+    @python setup.py install
 
 help:
-    python main.py --help
+    @venv/bin/twitter-cli --help
 
 timeline:
-    python main.py timeline --download-media
+    @venv/bin/twitter-cli timeline --download-media
 
 favorite:
-    python main.py favorites --destroy
+    @venv/bin/twitter-cli favorites --download-media --destroy
+
+publish:
+    rsync -avr --progress . gcp-vps:~/projects/twitter-cli/
