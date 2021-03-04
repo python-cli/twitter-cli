@@ -63,6 +63,11 @@ LOGGING_CONFIG = {
             'level': 'DEBUG',
             'propagate': False
         },
+        'twitter_cli.downloader': {  # if __name__ == '__main__'
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False
+        },
         'twitter': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
@@ -186,7 +191,7 @@ def save_status(status, destroy=False, timeline=None):
 
     if destroy:
         if not should_destory:
-            logger.warning('Destroying this status even no media found! Detail:\n%s', print_sample_entity(status))
+            logger.warning('Destroying this status even no media found!%s', print_sample_entity(s, 'Details:\n'))
 
         destroy_favorited_status(status)
 
@@ -310,7 +315,7 @@ def timeline(ctx, usernames, pinned, download_media, schedule):
                 if shall_download or download_media:
                     save_status(status, timeline=username)
                 else:
-                    print_sample_entity(status)
+                    print_sample_entity(status, prefix='Info:')
 
     if schedule <= 0:
         job()
@@ -352,7 +357,7 @@ def favorites(ctx, from_latest, download_media, destroy, schedule):
             if download_media:
                 save_status(status, destroy=destroy)
             else:
-                print_sample_entity(status)
+                print_sample_entity(status, prefix='Info: ')
 
     if schedule <= 0:
         job()
