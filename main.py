@@ -309,8 +309,8 @@ def timeline(ctx, usernames, pinned, download_media, schedule):
             logger.info('Fetching timeline of pinned user [%s]' % username)
 
             for status in generator:
-                shall_download = status.favorite_count * 1.0 / status.user.followers_count > 0.4
-                shall_download |= status.favorite_count > 500
+                shall_download = status.favorite_count * 1.0 / status.user.followers_count > 0.05
+                shall_download |= status.user.retweet_count * 1.0 / status.user.followers_count > 0.01
 
                 if shall_download or download_media:
                     save_status(status, timeline=username)
