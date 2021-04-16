@@ -40,6 +40,7 @@ def _load_config():
             _config.set(_SECTION_STORAGE, 'root_path', '~/Downloads/twitter-cli')
             _config.set(_SECTION_STORAGE, 'timeline', 'timeline')
             _config.set(_SECTION_STORAGE, 'favorite', 'favorite')
+            _config.set(_SECTION_STORAGE, 'pinned', 'pinned')
 
             _config.add_section(_SECTION_USERS)
             _config.set(_SECTION_USERS, 'names', '["me", ]')
@@ -79,14 +80,16 @@ def _get_storage_path(is_favorite=False, timeline=None):
     path = config.get(_SECTION_STORAGE, 'root_path')
 
     if is_favorite:
-        path = join(path, config.get(_SECTION_STORAGE, 'favorite'))
+        path = join(path, config.get(_SECTION_STORAGE, 'favorite', fallback='favorite'))
+    elif timeline in get_pinned_users():
+        path = join(path, config.get(_SECTION_STORAGE, 'pinned', fallback='pinned'))
     elif timeline:
-        path = join(path, config.get(_SECTION_STORAGE, 'timeline'), timeline)
+        path = join(path, config.get(_SECTION_STORAGE, 'timeline', fallback='timeline'), timeline)
 
     return expanduser(path)
 
 def get_video_storage_path(is_favorite=False, timeline=None):
-    path = join(_get_storage_path(is_favorite, timeline), 'videos')
+    path = _get_storage_path(is_favorite, timeline)
     exists(path) or makedirs(path)
     return path
 
