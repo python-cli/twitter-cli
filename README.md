@@ -15,9 +15,10 @@ Options:
   --help                Show this message and exit.
 
 Commands:
+  configure   Show the current configurations.
   credential  Verify the current user credential.
   favorites   Fetch the user's favorite statuses.
-  timeline    Fetch the specified user's timeline.
+  timeline    Fetch the specified users' timeline.
 ➜  ~ twitter-cli credential --help
 Usage: twitter-cli credential [OPTIONS]
 
