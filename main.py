@@ -378,6 +378,30 @@ def favorites(ctx, from_latest, download_media, destroy, schedule):
     wait_for_download_completed()
     logger.info('Done!')
 
+@cli.command()
+@click.argument('names', nargs=-1, type=click.STRING)
+@click.option('--username', type=click.STRING, default=None, help='List owner\'s screen name')
+@click.option('--download-media/--no-download-media', default=True, help='Download status\'s media files or not')
+@click.pass_context
+def list(ctx, names, username, download_media,):
+    '''
+    Fetch the statuses of specified list.
+    '''
+    tweet_lists = api.GetLists(screen_name=username)
+
+    if len(names) > 0:
+        tweet_lists = tweet_lists.filter(lambda x: x.name in names)
+
+    if len(tweet_lists) <= 0:
+        logger.warn("Not found expected list!")
+        return
+
+    for tweet_list in tweet_lists:
+        for status in fetch_iteriable_statuses(lambda max_id: api.GetListTimeline(list_id=tweet_list.id, count=PAGE_SIZE, max_id=max_id)):
+            if download_media:
+                save_status(status, destroy=False)
+            else:
+                print_sample_entity(status, prefix='Info: ')
 
 if __name__ == '__main__':
     cli()

@@ -19,5 +19,8 @@ timeline:
 favorite:
     @venv/bin/twitter-cli favorites --download-media --destroy
 
+list:
+    @venv/bin/twitter-cli list --download-media
+
 publish:
     rsync -avr --progress . gcp-vps:~/projects/twitter-cli/
