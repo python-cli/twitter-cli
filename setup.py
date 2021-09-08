@@ -26,13 +26,13 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        twitter-cli=twitter_cli.main:cli
+        twitter-cli=main:cli
     ''',
     classifiers=[
         'Development Status :: 1 - Beta',
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Unix Shell',
         'Topic :: System :: Shells',
         'Topic :: Terminals',

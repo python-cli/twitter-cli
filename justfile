@@ -1,26 +1,36 @@
+
 default:
     @just --choose
 
 active-env:
-    @source venv/bin/activate
+    @pipenv shell
 
 install:
-    @pip install -e .
+    @pipenv install -e .
+    # pipenv run pip install -e .
 
-setup:
-    @python setup.py install
+# setup:
+#     @python setup.py install
+
+cli *options:
+    @pipenv run twitter-cli {{options}}
+    @#@$(pipenv --venv)/bin/twitter-cli {{options}}  # works good, too.
 
 help:
-    @venv/bin/twitter-cli --help
+    @just cli --help
 
 timeline:
-    @venv/bin/twitter-cli timeline --download-media
+    @just cli timeline --download-media
 
 favorite:
-    @venv/bin/twitter-cli favorites --download-media --destroy
+    @just cli favorites --download-media --destroy
 
 list:
-    @venv/bin/twitter-cli list --download-media
+    @just cli list --download-media
 
 publish:
     rsync -avr --progress . gcp-vps:~/projects/twitter-cli/
+
+cleanup:
+    find . -type f -name "*.pyc" -delete
+    find . -type d -name "__pycache__" -delete

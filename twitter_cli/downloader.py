@@ -1,10 +1,15 @@
 
 import logging
 import requests
-from urlparse import urlparse
+
+try:
+    from urlparse import urlparse
+except:
+    from urllib.parse import urlparse
+
 from os.path import join, split, exists
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from config import *
+from .config import *
 
 logger = logging.getLogger(__name__)
 executor = ThreadPoolExecutor()

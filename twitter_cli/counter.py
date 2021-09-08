@@ -31,7 +31,7 @@ class Counter(object):
 
         if reset_func and callable(reset_func):
             if reset_func(cls._success, cls._failure, cls._reset_time):
-                print 'resetting'
+                logger.debug('resetting counter')
                 cls._success = 0
                 cls._failure = 0
                 cls._reset_time = datetime.now()
