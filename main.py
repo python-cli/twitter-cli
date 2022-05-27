@@ -22,7 +22,8 @@ LOGGING_CONFIG = {
     'disable_existing_loggers': True,
     'formatters': {
         'standard': {
-            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'colored': {
             '()': 'coloredlogs.ColoredFormatter',
@@ -63,7 +64,7 @@ LOGGING_CONFIG = {
             'level': 'DEBUG',
             'propagate': False
         },
-        'twitter_cli.downloader': {  # if __name__ == '__main__'
+        'twitter_cli.downloader': {
             'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False

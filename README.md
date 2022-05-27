@@ -4,6 +4,35 @@
 
 
 
+#### Environment
+
+* Python 3
+* [Pipenv]()
+
+
+
+#### Setup
+
+```bash
+# [Optional] Prepare to inject the environments from `.envrc`, it makes the virtualenv activated under the current project directory.
+direnv allow
+
+# Enter the virtualenv.
+pipenv shell
+
+# Install dependency and application itself.
+pipenv sync
+
+# Run
+twitter-cli
+# or via pipenv explicitly:
+pipenv run twitter-cli
+# or without activating venv after the first time:
+$(pipenv --venv)/bin/twitter-cli
+```
+
+
+
 #### Usage
 
 ```shell
